@@ -1,0 +1,42 @@
+name: Build a-Shell
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build:
+    runs-on: macos-latest
+
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        submodules: recursive
+
+    - name: Install dependencies
+      run: |
+        brew install node
+        brew install openssl
+        xcode-select --install
+
+    - name: Download xcFrameworks
+      run: ./downloadFrameworks.sh
+
+    - name: Change directory to cpython
+      run: cd cpython
+
+    - name: Build Python 3.11
+      run: sh ./downloadAndCompile.sh
+
+    - name: Build a-shell
+      run: |
+        xcodebuild -workspace a-Shell.xcworkspace -scheme "a-Shell" -configuration Release -sdk iphoneos -derivedDataPath build clean build
+        xcrun -sdk iphoneos PackageApplication -v build/Build/Products/Release-iphoneos/*.app -o a-Shell.ipa
+
+    - name: Archive production artifacts
+      uses: actions/upload-artifact@v2
+      with:
+        name: a-Shell
+        path: a-Shell.ipa
