@@ -1,0 +1,6 @@
+platform :ios do
+  desc "Build the app"
+  lane :build do
+    build_app(scheme: "a-shell")
+  end
+end
