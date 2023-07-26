@@ -1,0 +1,48 @@
+name: Build a-shell project
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  build:
+    runs-on: macOS-latest
+
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        submodules: false
+
+    - name: Update Submodules
+      run: |
+        git submodule init
+        git submodule deinit -f -- cpython
+        git rm -f cpython
+        rm -rf .git/modules/cpython/
+        git submodule add --force <cpython-repository-url>
+
+    - name: Install dependencies
+      run: |
+        sudo xcode-select --install
+        chmod +x ./downloadFrameworks.sh
+        ./downloadFrameworks.sh
+        cd cpython
+        chmod +x ./downloadAndCompile.sh
+        sh ./downloadAndCompile.sh
+        cd ..
+
+    - name: Build and archive app
+      run: |
+        xcodebuild -scheme a-Shell -configuration Release -archivePath a-Shell.xcarchive archive
+        xcodebuild -exportArchive -archivePath a-Shell.xcarchive -exportPath a-Shell -exportOptionsPlist ExportOptions.plist
+    
+    - name: Rename .xcarchive to .ipa
+      run: |
+        mv a-Shell.xcarchive/Products/Applications/*.app a-Shell.ipa
+
+    - name: Upload artifact
+      uses: actions/upload-artifact@v2
+      with:
+        name: a-Shell
+        path: a-Shell.ipa
