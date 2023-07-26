@@ -1,0 +1,46 @@
+name: Build a-shell project3
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  build:
+    runs-on: macOS-latest
+
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        submodules: recursive
+
+    - name: Fix submodule url
+      run: |
+        git config --file=.gitmodules submodule.cpython/packages/rasterio.url https://github.com/rasterio/rasterio.git
+        git submodule sync
+        git submodule update --init --recursive
+
+    - name: Install dependencies
+      run: |
+        sudo xcode-select --install
+        chmod +x ./downloadFrameworks.sh
+        ./downloadFrameworks.sh
+        cd cpython
+        chmod +x ./downloadAndCompile.sh
+        sh ./downloadAndCompile.sh
+        cd ..
+
+    - name: Build and archive app
+      run: |
+        xcodebuild -scheme a-Shell -configuration Release -archivePath a-Shell.xcarchive archive
+        xcodebuild -exportArchive -archivePath a-Shell.xcarchive -exportPath a-Shell -exportOptionsPlist ExportOptions.plist
+    
+    - name: Rename .xcarchive to .ipa
+      run: |
+        mv a-Shell.xcarchive/Products/Applications/*.app a-Shell.ipa
+
+    - name: Upload artifact
+      uses: actions/upload-artifact@v2
+      with:
+        name: a-Shell
+        path: a-Shell.ipa
