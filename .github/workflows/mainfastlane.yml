@@ -1,0 +1,28 @@
+name: Build a-shell fastlane
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: macOS-latest
+
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v2
+
+    - name: Set Xcode version
+      run: sudo xcode-select --switch /Applications/Xcode_12.app
+
+    - name: Install Dependencies
+      run: |
+        brew install node
+        sudo gem install fastlane -NV
+
+    - name: Install NPM dependencies
+      run: npm ci
+
+    - name: Fastlane build
+      run: fastlane build
