@@ -20,7 +20,7 @@ jobs:
         git submodule deinit -f -- cpython
         git rm -f cpython
         rm -rf .git/modules/cpython/
-        git submodule add --force <cpython-repository-url>
+        git submodule add --force https://github.com/holzschu/cpython.git cpython
 
     - name: Install dependencies
       run: |
