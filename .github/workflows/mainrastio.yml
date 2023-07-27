@@ -1,0 +1,36 @@
+name: Build a-shell fix
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: macOS-latest
+
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v2
+
+    - name: Update rasterio submodule URL
+      run: |
+        git config --file=.gitmodules submodule.cpython/packages/rasterio.url https://github.com/rasterio/rasterio
+        git submodule sync
+
+    - name: Initialize submodules
+      run: git submodule update --init --recursive
+
+    - name: Set Xcode version
+      run: sudo xcode-select --switch /Applications/Xcode_12.app
+
+    - name: Install Dependencies
+      run: |
+        brew install node
+        sudo gem install fastlane -NV
+
+    - name: Install NPM dependencies
+      run: npm ci
+
+    - name: Fastlane build
+      run: fastlane build
